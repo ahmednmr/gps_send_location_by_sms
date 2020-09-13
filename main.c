@@ -46,40 +46,62 @@ ISR (USART_RXC_vect)
 int main()
 {
 	GSM_init();
-	DDRD |=(1<<PD2);
+	DDRD |=(1<<PD2)|(1<<PD7);
 
 
-while(1)
-{
+	while(1)
+	{
 
-if(PIND&(1<<PD2))
-{
-	_delay_ms(300);
+		PORTD &=~(1<<PD7);
 
-	UART_SEND_string("AT+CMGF=1\r");
-	//		while(!Check_Respond("\r\nOK\r\n"))
-	//		{
-	//			_delay_ms(1);
-	//		}
-	_delay_ms(1000);
+		if(PIND&(1<<PD2))
+		{
+			PORTD |=(1<<PD7);
+			_delay_ms(300);
 
-	UART_SEND_string("AT+CMGS=\"01115948824\"\r");
-	//		while(!Check_Respond("\r\nOK\r\n"))
-	//		{
-	//			_delay_ms(1);
-	//		}
-	_delay_ms(1000);
+			UART_SEND_string("AT+CMGF=1\r");
+			//		while(!Check_Respond("\r\nOK\r\n"))
+			//		{
+			//			_delay_ms(1);
+			//		}
+			_delay_ms(1000);
 
-	UART_SEND_string("Hello From GSM Module");   //https://www.google.com/maps/place/30.0110647,31.2067936
-	UART_SendChar(0x1A);
-	//		while(!Check_Respond("\r\nOK\r\n"))
-	//		{
-	//			_delay_ms(1);
-	//		}
-	_delay_ms(3000);
-}
+			UART_SEND_string("AT+CMGS=\"01115948824\"\r");
+			//		while(!Check_Respond("\r\nOK\r\n"))
+			//		{
+			//			_delay_ms(1);
+			//		}
+			_delay_ms(1000);
 
-}
+//			UART_SEND_string("Hello From GSM Module");   //https://www.google.com/maps/place/30.0110647,31.2067936
+//			UART_SendChar(0x1A);
+//			//		while(!Check_Respond("\r\nOK\r\n"))
+			//		{
+			//			_delay_ms(1);
+			//		}
+
+			UART_SEND_string("https://www.google.com/maps/place/");
+			UART_SEND_string("30.0110647");
+			UART_SEND_string(",");
+			UART_SEND_string("31.2067936");
+			UART_SendChar(0x1A);
+
+
+
+
+
+
+
+
+
+
+
+
+
+			_delay_ms(3000);
+		}
+
+	}
 
 
 	return 0;
@@ -125,17 +147,17 @@ void Clear_REC_Buffer(void)
 
 void GSM_init(void)
 {
-init_UART();    //baudrate 9600
-sei();
+	init_UART();    //baudrate 9600
+	sei();
 
-_delay_ms(1000);
-Clear_REC_Buffer();
-UART_SEND_string("ATE1\r");
-//	while(!((Check_Respond("\r\nOK\r\n"))||(Check_Respond("ATE0\r\r\n\r\nOK\r\n"))))
-//	{
-//		_delay_ms(1);
-//	}
-_delay_ms(3000);
+	_delay_ms(1000);
+	Clear_REC_Buffer();
+	UART_SEND_string("ATE1\r");
+	//	while(!((Check_Respond("\r\nOK\r\n"))||(Check_Respond("ATE0\r\r\n\r\nOK\r\n"))))
+	//	{
+	//		_delay_ms(1);
+	//	}
+	_delay_ms(3000);
 }
 
 

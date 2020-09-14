@@ -9,6 +9,7 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include MCAL/subdir.mk
+-include HAL/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -31,61 +32,60 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 LSS += \
-send_location_sms.lss \
+GPS_GET_LOCATION_BY_SMS.lss \
 
 FLASH_IMAGE += \
-send_location_sms.hex \
+GPS_GET_LOCATION_BY_SMS.hex \
 
 EEPROM_IMAGE += \
-send_location_sms.eep \
+GPS_GET_LOCATION_BY_SMS.eep \
 
 SIZEDUMMY += \
 sizedummy \
 
 
 # All Target
-all: send_location_sms.elf secondary-outputs
+all: GPS_GET_LOCATION_BY_SMS.elf secondary-outputs
 
 # Tool invocations
-send_location_sms.elf: $(OBJS) $(USER_OBJS)
+GPS_GET_LOCATION_BY_SMS.elf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: AVR C Linker'
-	avr-gcc -Wl,-Map,send_location_sms.map -mmcu=atmega32 -o "send_location_sms.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	avr-gcc -Wl,-Map,GPS_GET_LOCATION_BY_SMS.map -mmcu=atmega32 -o "GPS_GET_LOCATION_BY_SMS.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-send_location_sms.lss: send_location_sms.elf
+GPS_GET_LOCATION_BY_SMS.lss: GPS_GET_LOCATION_BY_SMS.elf
 	@echo 'Invoking: AVR Create Extended Listing'
-	-avr-objdump -h -S send_location_sms.elf  >"send_location_sms.lss"
+	-avr-objdump -h -S GPS_GET_LOCATION_BY_SMS.elf  >"GPS_GET_LOCATION_BY_SMS.lss"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-send_location_sms.hex: send_location_sms.elf
+GPS_GET_LOCATION_BY_SMS.hex: GPS_GET_LOCATION_BY_SMS.elf
 	@echo 'Create Flash image (ihex format)'
-	-avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex send_location_sms.elf  "send_location_sms.hex"
+	-avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex GPS_GET_LOCATION_BY_SMS.elf  "GPS_GET_LOCATION_BY_SMS.hex"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-send_location_sms.eep: send_location_sms.elf
+GPS_GET_LOCATION_BY_SMS.eep: GPS_GET_LOCATION_BY_SMS.elf
 	@echo 'Create eeprom image (ihex format)'
-	-avr-objcopy -j .eeprom --no-change-warnings --change-section-lma .eeprom=0 -O ihex send_location_sms.elf  "send_location_sms.eep"
+	-avr-objcopy -j .eeprom --no-change-warnings --change-section-lma .eeprom=0 -O ihex GPS_GET_LOCATION_BY_SMS.elf  "GPS_GET_LOCATION_BY_SMS.eep"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-sizedummy: send_location_sms.elf
+sizedummy: GPS_GET_LOCATION_BY_SMS.elf
 	@echo 'Invoking: Print Size'
-	-avr-size --format=avr --mcu=atmega32 send_location_sms.elf
+	-avr-size --format=avr --mcu=atmega32 GPS_GET_LOCATION_BY_SMS.elf
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(FLASH_IMAGE)$(ELFS)$(OBJS)$(ASM_DEPS)$(EEPROM_IMAGE)$(S_DEPS)$(SIZEDUMMY)$(S_UPPER_DEPS)$(LSS)$(C_DEPS) send_location_sms.elf
+	-$(RM) $(FLASH_IMAGE)$(ELFS)$(OBJS)$(ASM_DEPS)$(EEPROM_IMAGE)$(S_DEPS)$(SIZEDUMMY)$(S_UPPER_DEPS)$(LSS)$(C_DEPS) GPS_GET_LOCATION_BY_SMS.elf
 	-@echo ' '
 
 secondary-outputs: $(LSS) $(FLASH_IMAGE) $(EEPROM_IMAGE) $(SIZEDUMMY)
 
 .PHONY: all clean dependents
-.SECONDARY:
 
 -include ../makefile.targets

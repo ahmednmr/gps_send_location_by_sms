@@ -1,0 +1,3 @@
+GPS_SKM55.o GPS_SKM55.o: ../GPS_SKM55.c ../GPS_SKM55.h
+
+../GPS_SKM55.h:

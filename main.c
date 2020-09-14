@@ -4,59 +4,82 @@
  *  Created on: 5 Oct 2015
  *      Author: EmbeddedFab
  */
+#include "HAL/gsm.h"
+#include "HAL/LCD.h"
+#include "softuart.h"
+#include"GPS_SKM55.h"
+char RX_GPS_Search_buffer[DEFAULT_GPS_BUFFER_SIZE]={0};
 
-#include <avr/io.h>
-#include <util/delay.h>
-#include <stdio.h>
-#include <string.h>
-#include "MCAL/UART.h"
-#include <avr/interrupt.h>
-
-#include "stdlib.h"
-#include "string.h"
-
-#define TRUE 1
-#define FALSE 0
-
-#define SEND_SMS             1
-
-#define DEFAULT_BUFFER_SIZE 100
-char Rec_Data[DEFAULT_BUFFER_SIZE];
-char Counter=0;
-
-void GSM_init(void);
-char Check_Respond(char * Expected_Respond);
-char Check_Word_in_Respond(char * Word);
-void Clear_REC_Buffer(void);
-
-
-ISR (USART_RXC_vect)
-{
-	uint8_t oldsrg = SREG;
-	cli();
-	Rec_Data[Counter] = UDR;
-	Counter++;
-	if(Counter == DEFAULT_BUFFER_SIZE){
-		Counter = 0; //pointer = 0;
-	}
-	SREG = oldsrg;
-}
 
 
 int main()
 {
+	char c;
+	GPS_info GPS_SKM55_information_original;
+	GPS_info GPS_SKM55_information_modified;
+
+	LCD_VidInit();
+	LCD_vidsendword_with_clear("start");
+	softuart_init();
+	softuart_turn_rx_on(); /* redundant - on by default */
+	sei();
+
+
 	GSM_init();
-	DDRD |=(1<<PD2)|(1<<PD7);
+	DDRD &=~(1<<PD2);
 
-
+	UART_SEND_string("ATE1\r");
+	_delay_ms(3000);
+	LCD_vidsendword_with_clear("start program");
 	while(1)
 	{
 
-		PORTD &=~(1<<PD7);
+
+		if ( softuart_kbhit() ) {
+			c = softuart_getchar();
+			RX_GPS_Search_buffer[counter++]=c;
+			if(counter==DEFAULT_GPS_BUFFER_SIZE) 	Clear_GPS_REC_Buffer(RX_GPS_Search_buffer);
+
+		}
+
+
+
+
+		if(strstr(RX_GPS_Search_buffer,"GPGGA") )
+		{
+			Clear_GPS_REC_Buffer(RX_GPS_Search_buffer);
+		}
+		if(strstr(RX_GPS_Search_buffer,"GPGSA") )
+		{
+
+			GPS_Get_time_longitude_latitude_NMEA_format(RX_GPS_Search_buffer,&GPS_SKM55_information_original);
+
+			GPS_change_time_zone(&GPS_SKM55_information_original,&GPS_SKM55_information_modified);
+			GPS_Calculating_longitude_from_NMEA(&GPS_SKM55_information_original,&GPS_SKM55_information_modified);
+			GPS_Calculating_latitude_from_NMEA(&GPS_SKM55_information_original,&GPS_SKM55_information_modified);
+
+//			LCD_vidClear();
+//			LCD_vidsendword("long :");
+//			LCD_vidsendword(GPS_SKM55_information_modified.longitude);
+//			LCD_vidGoTo(1,0);
+//			LCD_vidsendword("lati :");
+//			LCD_vidsendword(GPS_SKM55_information_modified.latitude);
+//
+//			_delay_ms(300);
+//			GPS_SKM55_information_modified.longitude
+//			GPS_SKM55_information_modified.latitude
+//
+
+			Clear_GPS_REC_Buffer(RX_GPS_Search_buffer);
+		}
+
+
+
+
 
 		if(PIND&(1<<PD2))
 		{
-			PORTD |=(1<<PD7);
+			LCD_vidsendword_with_clear("button pressed");
 			_delay_ms(300);
 
 			UART_SEND_string("AT+CMGF=1\r");
@@ -64,41 +87,30 @@ int main()
 			//		{
 			//			_delay_ms(1);
 			//		}
-			_delay_ms(1000);
+			_delay_ms(2000);
 
 			UART_SEND_string("AT+CMGS=\"01115948824\"\r");
 			//		while(!Check_Respond("\r\nOK\r\n"))
 			//		{
 			//			_delay_ms(1);
 			//		}
-			_delay_ms(1000);
+			_delay_ms(2000);
 
-//			UART_SEND_string("Hello From GSM Module");   //https://www.google.com/maps/place/30.0110647,31.2067936
-//			UART_SendChar(0x1A);
-//			//		while(!Check_Respond("\r\nOK\r\n"))
+			//						UART_SEND_string("Hello From GSM Module");   //https://www.google.com/maps/place/30.0110647,31.2067936
+			//						UART_SendChar(0x1A);
+			//			//			//		while(!Check_Respond("\r\nOK\r\n"))
 			//		{
 			//			_delay_ms(1);
 			//		}
 
+			UART_SEND_string("Hajj number A001 needs help at location ");
 			UART_SEND_string("https://www.google.com/maps/place/");
-			UART_SEND_string("30.0110647");
+			UART_SEND_string(GPS_SKM55_information_modified.longitude);
 			UART_SEND_string(",");
-			UART_SEND_string("31.2067936");
+			UART_SEND_string(GPS_SKM55_information_modified.latitude);
 			UART_SendChar(0x1A);
 
-
-
-
-
-
-
-
-
-
-
-
-
-			_delay_ms(3000);
+			LCD_vidsendword_with_clear("done sending");
 		}
 
 	}
@@ -106,61 +118,6 @@ int main()
 
 	return 0;
 }
-
-
-char Check_Respond(char * Expected_Respond)
-{
-	char Respond_Length=0;
-
-	Respond_Length=strlen(Expected_Respond);
-
-	if(strncmp(Rec_Data,Expected_Respond, Respond_Length)==0)
-	{
-		Clear_REC_Buffer();
-		return TRUE;
-	}
-	return FALSE;
-
-
-}
-
-
-char Check_Word_in_Respond(char * Word)
-{
-
-
-	if(strstr(Rec_Data,Word) != 0)
-	{
-		Clear_REC_Buffer();
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-void Clear_REC_Buffer(void)
-{
-	Counter=0;
-	memset(Rec_Data,0,DEFAULT_BUFFER_SIZE);
-}
-
-
-void GSM_init(void)
-{
-	init_UART();    //baudrate 9600
-	sei();
-
-	_delay_ms(1000);
-	Clear_REC_Buffer();
-	UART_SEND_string("ATE1\r");
-	//	while(!((Check_Respond("\r\nOK\r\n"))||(Check_Respond("ATE0\r\r\n\r\nOK\r\n"))))
-	//	{
-	//		_delay_ms(1);
-	//	}
-	_delay_ms(3000);
-}
-
-
 
 
 

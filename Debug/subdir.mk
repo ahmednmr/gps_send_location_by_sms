@@ -4,13 +4,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../main.c 
+../GPS_SKM55.c \
+../main.c \
+../softuart.c 
 
 OBJS += \
-./main.o 
+./GPS_SKM55.o \
+./main.o \
+./softuart.o 
 
 C_DEPS += \
-./main.d 
+./GPS_SKM55.d \
+./main.d \
+./softuart.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
